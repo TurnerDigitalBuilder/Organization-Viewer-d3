@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Enhanced Collapsible Tidy Tree</title>
+  <!-- Using a Google Font for a modern look -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="controls" role="region" aria-label="Control Panel">
+    <button id="toggleControls" aria-expanded="true">Hide Controls</button>
+    <div id="controlsContent">
+      <input type="file" id="fileInput" accept=".json" aria-label="Upload JSON file">
+      <label for="colorToggle">Color By:</label>
+      <select id="colorToggle" aria-label="Color Toggle">
+        <option value="department">Department</option>
+        <option value="email">Email Domain</option>
+        <option value="chatgptLicense">ChatGPT License</option>
+      </select>
+      <label for="spacingSlider">Horizontal Spacing:</label>
+      <input type="range" id="spacingSlider" min="50" max="300" value="180" aria-label="Horizontal Spacing">
+      <label for="verticalSlider">Vertical Spacing:</label>
+      <input type="range" id="verticalSlider" min="0.5" max="25" step="0.1" value="1" aria-label="Vertical Spacing">
+      <button id="resetButton">Reset View</button>
+      <label for="searchInput">Search Nodes:</label>
+      <input type="text" id="searchInput" placeholder="Enter node name" aria-label="Search Nodes">
+      <button id="exportButton">Export SVG</button>
+      <div id="legend"></div>
+      <div id="errorMessage" role="alert"></div>
+    </div>
+  </div>
+  <div id="treeContainer" role="tree"></div>
+  <div id="minimapContainer">
+    <div id="minimapTitle">Minimap</div>
+    <div id="minimap"></div>
+  </div>
+  <div id="detailsPanel" role="region" aria-label="Node Details">
+    <h3>Node Details</h3>
+    <div id="detailsContent">Click on a node to view details.</div>
+  </div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

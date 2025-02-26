@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Organizational Chart</title>
+  <style>
+    /* Global reset and base styles */
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-color: #3498db;
+      --primary-dark: #2980b9;
+      --text-color: #333;
+      --text-light: #666;
+      --background: #fff;
+      --card-bg: #f8f9fa;
+      --border-color: #ddd;
+      --node-bg: #fff;
+      --link-color: #ccc;
+      --highlight-color: #f39c12;
+      --tooltip-bg: rgba(255, 255, 255, 0.95);
+      --tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      --transition-speed: 0.3s;
+      --input-bg: #fff;
+    }
+
+    /* Dark mode colors */
+    .dark-mode {
+      --primary-color: #2196F3;
+      --primary-dark: #1976D2;
+      --text-color: #eee;
+      --text-light: #bbb;
+      --background: #121212;
+      --card-bg: #1e1e1e;
+      --border-color: #444;
+      --node-bg: #333;
+      --link-color: #555;
+      --highlight-color: #f39c12;
+      --tooltip-bg: rgba(40, 40, 40, 0.95);
+      --tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --input-bg: #333;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-color);
+      background-color: var(--background);
+      transition: background-color var(--transition-speed);
+    }
+
+    /* Main container */
+    #treeContainer {
+      width: 100%;
+      height: calc(100% - 60px);
+      overflow: hidden;
+      position: relative;
+      transition: background-color var(--transition-speed);
+    }
+
+    /* Control panel styling */
+    #controls {
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      padding: 10px 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 15px;
+      transition: background-color var(--transition-speed);
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #fileInputContainer {
+      position: relative;
+      overflow: hidden;
+    }
+
+    #fileInputLabel {
+      display: inline-block;
+      padding: 6px 12px;
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    #fileInputLabel:hover {
+      background-color: var(--primary-dark);
+    }
+
+    #fileInput {
+      position: absolute;
+      font-size: 100px;
+      opacity: 0;
+      right: 0;
+      top: 0;
+      cursor: pointer;
+    }
+
+    select, input, button {
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: all 0.2s;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    #searchContainer {
+      position: relative;
+      flex-grow: 1;
+      max-width: 300px;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding-right: 30px;
+    }
+
+    #clearSearch {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #darkModeToggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    #toggleIcon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+
+    /* Node styling */
+    .node circle {
+      stroke: var(--primary-color);
+      stroke-width: 2px;
+      fill: var(--node-bg);
+      transition: all var(--transition-speed);
+    }
+
+    .node.highlighted circle {
+      stroke: var(--highlight-color);
+      stroke-width: 3px;
+      r: 15;
+    }
+
+    .node text {
+      font: 12px sans-serif;
+      fill: var(--text-color);
+      transition: fill var(--transition-speed);
+    }
+
+    .node text.title {
+      font: 10px sans-serif;
+      fill: var(--text-light);
+      transition: fill var(--transition-speed);
+    }
+
+    .link {
+      fill: none;
+      stroke: var(--link-color);
+      stroke-width: 1.5px;
+      transition: stroke var(--transition-speed);
+    }
+
+    .link.highlighted {
+      stroke: var(--highlight-color);
+      stroke-width: 2.5px;
+    }
+
+    /* Profile card styling */
+    .profile-card {
+      position: absolute;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: var(--tooltip-bg);
+      box-shadow: var(--tooltip-shadow);
+      width: 280px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-card.visible {
+      opacity: 1;
+    }
+
+    .profile-card-header {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .profile-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .profile-info {
+      flex-grow: 1;
+    }
+
+    .profile-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+      color: var(--text-color);
+    }
+
+    .profile-title {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .profile-details {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    .profile-detail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-detail-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+
+    /* Loading indicator */
+    .loading-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .dark-mode .loading-container {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .loading-container.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Node actions */
+    .node-actions {
+      position: absolute;
+      display: flex;
+      gap: 5px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .node-actions.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .node-action-btn {
+      width: 24px;
+      height: 24px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+
+    .node-action-btn:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    /* Error message */
+    #errorMessage {
+      color: #e74c3c;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      #controls {
+        flex-direction: column;
+        height: auto;
+        align-items: stretch;
+        padding: 10px;
+      }
+      
+      .control-group {
+        flex-wrap: wrap;
+      }
+      
+      #treeContainer {
+        height: calc(100% - 170px);
+      }
+      
+      #searchContainer {
+        max-width: 100%;
+      }
+    }
+
+    /* Mini map */
+    #miniMap {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 150px;
+      height: 100px;
+      border: 1px solid var(--border-color);
+      background-color: var(--card-bg);
+      border-radius: 4px;
+      z-index: 100;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      opacity: 0.8;
+      transition: opacity 0.2s, width 0.2s, height 0.2s;
+    }
+
+    #miniMap:hover {
+      opacity: 1;
+      width: 200px;
+      height: 150px;
+    }
+
+    /* Expand/collapse all button */
+    #expandCollapseToggle {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Filter panel */
+    #filterPanel {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 250px;
+      max-height: 0;
+      overflow: hidden;
+      background-color: var(--card-bg);
+      border-left: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 900;
+      transition: max-height 0.3s ease-in-out;
+      box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #filterPanel.open {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .filter-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-section {
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .filter-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .filter-option {
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-option label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .filter-option input {
+      margin: 0;
+    }
+
+    .filter-color {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Stats Panel */
+    #statsPanel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      font-size: 12px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Control panel -->
+  <div id="controls">
+    <div class="control-group">
+      <div id="fileInputContainer">
+        <label for="fileInput" id="fileInputLabel">Load JSON</label>
+        <input type="file" id="fileInput" accept=".json" />
+      </div>
+      <button id="expandCollapseToggle">Expand All</button>
+      <button id="toggleFilterPanel">Filters</button>
+      <button id="resetButton">Reset View</button>
+      <button id="exportButton">Export PNG</button>
+    </div>
+    
+    <div class="control-group">
+      <label for="colorToggle">Color By:</label>
+      <select id="colorToggle">
+        <option value="department">Department</option>
+        <option value="email">Email Domain</option>
+        <option value="chatgptLicense">ChatGPT License</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label for="spacingSlider">Horizontal:</label>
+      <input type="range" id="spacingSlider" min="50" max="300" value="180" />
+      
+      <label for="verticalSlider">Vertical:</label>
+      <input type="range" id="verticalSlider" min="0.5" max="25" step="0.1" value="1" />
+    </div>
+    
+    <div id="searchContainer">
+      <input type="text" id="searchInput" placeholder="Search by name, title, email..." />
+      <button id="clearSearch">×</button>
+    </div>
+    
+    <div id="darkModeToggle">
+      <span id="toggleIcon">🌙</span>
+      <span id="toggleText">Dark Mode</span>
+    </div>
+    
+    <span id="errorMessage"></span>
+  </div>
+  
+  <!-- Filter panel -->
+  <div id="filterPanel">
+    <div class="filter-header">
+      <span>Filters</span>
+      <button id="closeFilterPanel">×</button>
+    </div>
+    <!-- Filter sections will be dynamically added here -->
+  </div>
+  
+  <!-- Tree container -->
+  <div id="treeContainer"></div>
+  
+  <!-- Loading indicator -->
+  <div class="loading-container">
+    <div class="spinner"></div>
+  </div>
+  
+  <!-- Stats panel -->
+  <div id="statsPanel">
+    <div class="stat-row">
+      <span class="stat-label">Total Nodes:</span>
+      <span id="totalNodes">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Max Depth:</span>
+      <span id="maxDepth">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Departments:</span>
+      <span id="deptCount">0</span>
+    </div>
+  </div>
+  
+  <!-- MiniMap -->
+  <div id="miniMap"></div>
+  
+  <!-- Profile card for nodes -->
+  <div class="profile-card">
+    <div class="profile-card-header">
+      <div class="profile-avatar"></div>
+      <div class="profile-info">
+        <h3 class="profile-name"></h3>
+        <p class="profile-title"></p>
+      </div>
+    </div>
+    <div class="profile-details">
+      <!-- Details will be added dynamically -->
+    </div>
+  </div>
+  
+  <!-- Node action buttons -->
+  <div class="node-actions">
+    <div class="node-action-btn" id="expandBranchBtn" title="Expand Branch">+</div>
+    <div class="node-action-btn" id="collapseBranchBtn" title="Collapse Branch">-</div>
+    <div class="node-action-btn" id="focusNodeBtn" title="Focus">👁️</div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    (function() {
+      // Define margins and initial dimensions
+      const margin = { top: 20, right: 90, bottom: 30, left: 90 };
+      let width, height;
+      const container = document.getElementById("treeContainer");
+      const profileCard = document.querySelector(".profile-card");
+      const nodeActions = document.querySelector(".node-actions");
+      let svg, g, root, treemap, i = 0, duration = 750;
+      let sliderHorizontal = +document.getElementById("spacingSlider").value;
+      let sliderVertical = +document.getElementById("verticalSlider").value;
+      let colorToggle = document.getElementById("colorToggle").value;
+      let isExpandedAll = false;
+      let currentSearchTerm = "";
+      let loadingTimer;
+      let activeNode = null;
+      
+      // Filter states
+      let filters = {
+        departments: {},
+        emailDomains: {},
+        chatgptLicense: { true: true, false: true }
+      };
+
+      // Global color scales
+      let departmentColors;
+      const emailColors = d3.scaleOrdinal(d3.schemeCategory10);
+      
+      // Set SVG dimensions based on container size
+      function setDimensions() {
+        width = container.clientWidth - margin.left - margin.right;
+        height = container.clientHeight - margin.top - margin.bottom;
+      }
+      setDimensions();
+      
+      // Show/hide loading indicator
+      function showLoading() {
+        document.querySelector(".loading-container").classList.add("active");
+        clearTimeout(loadingTimer);
+        loadingTimer = setTimeout(hideLoading, 10000); // Safeguard
+      }
+      
+      function hideLoading() {
+        document.querySelector(".loading-container").classList.remove("active");
+        clearTimeout(loadingTimer);
+      }
+      
+      // Initialize SVG, zoom behavior, and tree layout
+      function initializeSvg() {
+        // Remove any existing SVG
+        d3.select("#treeContainer").select("svg").remove();
+        
+        // Create main SVG
+        svg = d3.select("#treeContainer")
+          .append("svg")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("viewBox", [0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom])
+          .call(d3.zoom().scaleExtent([0.1, 3]).on("zoom", (event) => {
+            g.attr("transform", event.transform);
+            updateMiniMapViewport(event.transform);
+          }))
+          .on("click", () => {
+            // Hide profile card and actions on background click
+            profileCard.classList.remove("visible");
+            nodeActions.classList.remove("visible");
+          });
+        
+        g = svg.append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        treemap = d3.tree().size([height, width]);
+        
+        // Initialize mini map
+        initializeMiniMap();
+      }
+      
+      // Initialize mini map
+      function initializeMiniMap() {
+        d3.select("#miniMap").select("svg").remove();
+        
+        const miniSvg = d3.select("#miniMap")
+          .append("svg")
+          .attr("width", "100%")
+          .attr("height", "100%");
+        
+        miniSvg.append("g")
+          .attr("class", "mini-tree");
+        
+        miniSvg.append("rect")
+          .attr("class", "mini-viewport")
+          .attr("stroke", "#3498db")
+          .attr("stroke-width", 1)
+          .attr("fill", "none")
+          .attr("pointer-events", "none");
+      }
+      
+      // Update mini map
+      function updateMiniMap() {
+        if (!root) return;
+        
+        const miniMap = d3.select("#miniMap");
+        const miniWidth = miniMap.node().clientWidth;
+        const miniHeight = miniMap.node().clientHeight;
+        
+        // Create a mini tree layout with the same aspect ratio
+        const aspectRatio = width / height;
+        let miniTreeWidth, miniTreeHeight;
+        
+        if (miniWidth / miniHeight > aspectRatio) {
+          miniTreeHeight = miniHeight - 10;
+          miniTreeWidth = miniTreeHeight * aspectRatio;
+        } else {
+          miniTreeWidth = miniWidth - 10;
+          miniTreeHeight = miniTreeWidth / aspectRatio;
+        }
+        
+        const miniTreemap = d3.tree().size([miniTreeHeight, miniTreeWidth]);
+        const miniTreeData = miniTreemap(root.copy());
+        
+        // Create mini nodes
+        const miniG = d3.select("#miniMap").select(".mini-tree")
+          .attr("transform", `translate(5, 5)`);
+        
+        // Clear previous content
+        miniG.selectAll("*").remove();
+        
+        // Add links
+        miniG.selectAll(".mini-link")
+          .data(miniTreeData.links())
+          .enter()
+          .append("path")
+          .attr("class", "mini-link")
+          .attr("d", d => {
+            return `M${d.source.y},${d.source.x}
+                  C${(d.source.y + d.target.y) / 2},${d.source.x}
+                  ${(d.source.y + d.target.y) / 2},${d.target.x}
+                  ${d.target.y},${d.target.x}`;
+          })
+          .attr("stroke", "#ccc")
+          .attr("stroke-width", 0.5)
+          .attr("fill", "none");
+        
+        // Add nodes
+        miniG.selectAll(".mini-node")
+          .data(miniTreeData.descendants())
+          .enter()
+          .append("circle")
+          .attr("class", "mini-node")
+          .attr("cx", d => d.y)
+          .attr("cy", d => d.x)
+          .attr("r", 1)
+          .attr("fill", "#3498db");
+        
+        updateMiniMapViewport();
+      }
+      
+      // Update mini map viewport
+      function updateMiniMapViewport(transform) {
+        if (!transform) {
+          transform = d3.zoomTransform(svg.node());
+        }
+        
+        const miniMap = d3.select("#miniMap");
+        const miniWidth = miniMap.node().clientWidth;
+        const miniHeight = miniMap.node().clientHeight;
+        
+        // Calculate viewport rectangle
+        const vpWidth = miniWidth / transform.k;
+        const vpHeight = miniHeight / transform.k;
+        const vpX = -transform.x / transform.k * (miniWidth / width);
+        const vpY = -transform.y / transform.k * (miniHeight / height);
+        
+        // Update viewport rectangle
+        miniMap.select(".mini-viewport")
+          .attr("x", vpX)
+          .attr("y", vpY)
+          .attr("width", vpWidth)
+          .attr("height", vpHeight);
+      }
+      
+      // Return appropriate color based on selected toggle and filtering
+      function getColor(data) {
+        if (!data) return "#fff";
+        
+        // Handle filtering opacity
+        let opacity = 1;
+        
+        // Filter by department
+        if (data.department && !filters.departments[data.department]) {
+          opacity = 0.2;
+        }
+        
+        // Filter by email domain
+        if (data.email) {
+          const domain = data.email.split("@")[1].toLowerCase();
+          if (!filters.emailDomains[domain]) {
+            opacity = 0.2;
+          }
+        }
+        
+        // Filter by chatGPT license
+        if (data.chatgptLicense && !filters.chatgptLicense[data.chatgptLicense]) {
+          opacity = 0.2;
+        }
+        
+        // Get base color
+        let color;
+        if (colorToggle === "department") {
+          color = data.department ? departmentColors(data.department) : "#ccc";
+        } else if (colorToggle === "email") {
+          const domain = data.email ? data.email.split("@")[1].toLowerCase() : "";
+          color = domain ? emailColors(domain) : "#ccc";
+        } else if (colorToggle === "chatgptLicense") {
+          color = data.chatgptLicense === "true" ? "#e74c3c" : "#3498db";
+        } else {
+          color = "#ccc";
+        }
+        
+        // Convert to RGBA for opacity
+        const rgb = d3.color(color).rgb();
+        return opacity < 1 ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})` : color;
+      }
+      
+      // Extract all unique departments from the hierarchy
+      function getUniqueDepartments(rootNode) {
+        const deptSet = new Set();
+        rootNode.each(d => {
+          if (d.data.department) {
+            deptSet.add(d.data.department);
+          }
+        });
+        return Array.from(deptSet);
+      }
+      
+      // Extract all unique email domains from the hierarchy
+      function getUniqueEmailDomains(rootNode) {
+        const domainSet = new Set();
+        rootNode.each(d =>

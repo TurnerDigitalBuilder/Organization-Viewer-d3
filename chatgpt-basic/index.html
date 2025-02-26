@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Fully Expanded Collapsible Tidy Tree with Adjustable Spacing</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="controls">
+    <input type="file" id="fileInput" accept=".json" />
+    <label for="colorToggle">Color By:</label>
+    <select id="colorToggle">
+      <option value="department">Department</option>
+      <option value="email">Email Domain</option>
+      <option value="chatgptLicense">ChatGPT License</option>
+    </select>
+    <label for="spacingSlider">Horizontal Spacing:</label>
+    <input type="range" id="spacingSlider" min="50" max="300" value="180" />
+    <label for="verticalSlider">Vertical Spacing:</label>
+    <input type="range" id="verticalSlider" min="0.5" max="25" step="0.1" value="1" />
+    <button id="resetButton">Reset View</button>
+    <div id="errorMessage"></div>
+  </div>
+  <div id="treeContainer"></div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

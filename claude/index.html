@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Organizational Structure Viewer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Org Structure Viewer</h1>
+      <button id="darkModeToggle" class="mode-toggle">Dark Mode</button>
+    </header>
+
+    <div class="main-content">
+      <!-- Control Panel -->
+      <div id="controls" class="control-panel">
+        <div class="panel-section">
+          <h3>Data Import</h3>
+          <div class="file-input-container">
+            <label for="fileInput" class="file-input-label">
+              <i class="fas fa-upload"></i> Upload Organization JSON
+            </label>
+            <input type="file" id="fileInput" accept=".json" />
+          </div>
+          <div id="errorMessage"></div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Visualization Controls</h3>
+          <div class="control-row">
+            <label for="colorToggle">Color By:</label>
+            <select id="colorToggle">
+              <option value="department">Department</option>
+              <option value="email">Email Domain</option>
+              <option value="chatgptLicense">ChatGPT License</option>
+              <option value="reports">Direct Reports</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <label for="spacingSlider">Horizontal Spacing: <span id="horizontalValue">180</span>px</label>
+            <input type="range" id="spacingSlider" min="50" max="500" value="180" />
+          </div>
+
+          <div class="control-row">
+            <label for="verticalSlider">Vertical Spacing: <span id="verticalValue">1.0</span>x</label>
+            <input type="range" id="verticalSlider" min="0.5" max="25" step="0.1" value="1" />
+          </div>
+        </div>
+
+        <div id="additionalControls" class="panel-section" style="display: none;">
+          <h3>Tree Controls</h3>
+          <div class="button-grid">
+            <div class="button-row">
+              <button id="expandAllButton" class="control-button">
+                <i class="fas fa-expand"></i> Expand All
+              </button>
+              <button id="collapseAllButton" class="control-button">
+                <i class="fas fa-compress"></i> Collapse All
+              </button>
+            </div>
+            <div class="button-row">
+              <button id="resetButton" class="control-button">
+                <i class="fas fa-sync-alt"></i> Reset View
+              </button>
+              <button id="exportButton" class="control-button">
+                <i class="fas fa-file-export"></i> Export SVG
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Search</h3>
+          <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search name, title, department..." />
+            <i class="fas fa-search search-icon"></i>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Filter</h3>
+          <div class="filter-row">
+            <label for="filterDepartment">Department:</label>
+            <input type="text" id="filterDepartment" placeholder="Department name..." />
+          </div>
+          <div class="button-row">
+            <button id="applyFilterButton" class="control-button">Apply Filter</button>
+            <button id="resetFilterButton" class="control-button">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tree Visualization Area -->
+      <div id="treeContainer"></div>
+    </div>
+
+    <!-- Minimap (optional enhancement) -->
+    <div id="minimap" class="minimap">
+      <div class="minimap-viewport"></div>
+    </div>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>
